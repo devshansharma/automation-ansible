@@ -1,0 +1,20 @@
+- hosts: all
+  remote_user: root
+
+  tasks:
+    - debug: var=ansible_memory_mb
+    - debug: msg="total RAM is {{ ansible_memory_mb.real.total }}"
+    - fail: msg="not enough RAM"
+      when: ansible_memory_mb.real.free < 200
+
+    - name: check date
+      command: date
+      register: out
+    - debug: msg={{out.stdout}}
+
+    - pause: seconds=3
+
+    - name: check date
+      command: date
+      register: out
+    - debug: msg={{out.stdout}}

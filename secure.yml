@@ -1,0 +1,51 @@
+- name: change SSH configurations (port)
+  hosts: all
+  remote_user: root
+  gather_facts: no
+
+# https://dmsimard.com/2016/03/15/changing-the-ssh-port-with-ansible/
+
+  tasks:
+    - name: assume SSH port 22
+      set_fact:
+        configured_port: "22"
+        different_port: false
+    # - debug: msg="{{ configured_port }}"
+
+    - name: check if we are using the default SSH port
+      wait_for:
+        port: "22"
+        state: "started"
+        host: "{{ inventory_hostname }}"
+        connect_timeout: "5"
+        timeout: "10"
+      delegate_to: "localhost"
+      ignore_errors: yes
+      register: default_ssh
+
+    - name: check if we have to change port for SSH
+      set_fact:
+        configured_port: "{{ ansible_port }}"
+        ansible_port: 22
+        different_port: true
+      register: set_ssh_port
+      when: default_ssh is defined and 
+            default_ssh.state is not undefined and
+            configured_port != ansible_port
+    # - debug: msg="{{ configured_port }}"
+
+    # - name: confirm host connection works
+    #   ping:
+
+    - name: Setup alternate SSH port
+      lineinfile:
+        dest: "/etc/ssh/sshd_config"
+        regexp: "^Port"
+        line: "Port {{ configured_port }}"
+      when:
+        different_port == true
+
+    - name: restart ssh
+      service:
+        name: sshd
+        state: restarted

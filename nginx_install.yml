@@ -1,0 +1,42 @@
+- name: install nginx with latest version and start it
+  hosts: all
+  remote_user: root
+  gather_facts: no
+
+  tasks:
+    - name: ensure nginx is the latest version
+      apt: name=nginx state=latest
+
+    - name: remove server header  
+      lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: '# server_tokens off;'
+        line: "server_tokens off;"
+        backrefs: yes
+
+    - name: start nginx
+      service: 
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: copy the nginx config file
+      copy:
+        src: nginx-static-site-src/nginx_static_site.cfg
+        dest: /etc/nginx/sites-available/static_site.cfg
+
+    - name: create symlink
+      file:
+        src: /etc/nginx/sites-available/static_site.cfg
+        dest: /etc/nginx/sites-enabled/default
+        state: link
+
+    - name: copy the content of the website
+      copy:
+        src: nginx-static-site-src/index.html
+        dest: /var/www/html/index.html
+
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted

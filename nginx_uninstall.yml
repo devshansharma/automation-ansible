@@ -1,0 +1,13 @@
+- name: remove if nginx is installed
+  hosts: all
+  remote_user: root
+  gather_facts: no
+
+  tasks:
+    - name: stop nginx
+      service:
+        name: nginx
+        state: stopped
+
+    - name: ensure nginx is not installed
+      apt: name=nginx state=absent

@@ -1,0 +1,40 @@
+- name: install mysql and create default user password
+  hosts: all
+  remote_user: root
+  gather_facts: no
+
+# --extra-vars "mpassword=my-password"
+
+  tasks:
+    - name: install mysql server
+      apt: name=mysql-server state=present
+
+    - name: install mysql client
+      apt: name=mysql-client state=present
+
+    - name: start mysql
+      service: 
+        name: mysql
+        state: started
+        enabled: true
+
+    - name: install pip3
+      apt: name=python3-pip state=present 
+
+    - name: Make sure pymysql is present
+      pip: name=pymysql state=present
+
+    - name: remove anonymous users
+      mysql_user:
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+        name: ''
+        host_all: yes
+        state: absent
+
+    - name: remove pymysql
+      pip: name=pymysql state=absent
+
+    - name: uninstall pip3
+      apt: name=python3-pip state=absent 
+
+
